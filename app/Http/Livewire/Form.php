@@ -2,6 +2,7 @@
 
 namespace App\Http\Livewire;
 
+use App\Models\Student;
 use Illuminate\Http\Request;
 use Livewire\Component;
 
@@ -9,20 +10,29 @@ class Form extends Component
 {
     public $name;
     public $email;
+    public $roll;
+    public $lists;
+
 
     protected $rules = [
-        'name' => 'required|min:3',
+        'name' => 'required',
+        'roll' => 'required',
         'email' => 'required|email',
     ];
 
     public function render()
     {
+        $this->lists = Student::all();
         return view('livewire.form');
     }
-    public function updated($propertyName)
+
+    // real time validation
+
+    public function updated($field)
     {
-        $this->validateOnly($propertyName, [
-            'email' => 'required|email',
+        $this->validateOnly($field, [
+            'email' => 'required|email|unique:students',
+            'roll' => 'required|unique:students',
             'name' => 'required',
         ]);
     }
@@ -30,9 +40,24 @@ class Form extends Component
     public function submitForm(Request $request)
     {
         $this->validate();
+        Student::create([
+            'name' => $this->name,
+            'roll' => $this->roll,
+            'email' => $this->email,
+        ]);
+        $this->clearFields();
+        
+    }
 
-        // Perform form submission logic
-        dd($request->all());
-        session()->flash('message', 'Form submitted successfully.');
+    private function clearFields()
+    {
+        $this->name = '';
+        $this->roll = '';
+        $this->email = '';
+    }
+    public function delete($id)
+    {
+        Student::find($id)->delete();
+        session()->flash('message', 'Post deleted successfully.');
     }
 }
